@@ -74,17 +74,43 @@ Railway fails if it builds from the repo root — there is no `requirements.txt`
 
 The app reads `DATABASE_URL` from the environment.
 
-### Step 3 — Initialize the database
+**Required variable on the API service:**
 
-After the first successful deploy, from your machine:
+| Variable | Value |
+|----------|--------|
+| `DATABASE_URL` | Reference from Postgres service (click **Add variable reference** → Postgres → `DATABASE_URL`) |
 
-```bash
-cd backend
-DATABASE_URL="<Railway Postgres public URL>" python3 scripts/init_db.py
-DATABASE_URL="<Railway Postgres public URL>" python3 scripts/seed_db.py
+**Optional:**
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `SEED_ON_STARTUP` | `true` | Seed demo products/customers if DB is empty |
+
+Remove docker-compose-only vars from the API service (`API_PORT`, `FRONTEND_PORT`, `VITE_API_URL`, `POSTGRES_*`) — they are not needed on Railway.
+
+### Step 3 — Database (automatic)
+
+On every deploy, the app **automatically**:
+
+1. Creates tables (`products`, `customers`, `orders`, `order_items`)
+2. Seeds demo data if the database is empty
+
+You do **not** need to run `init_db.py` or `seed_db.py` manually on Railway.
+
+Check deploy logs for:
+
+```
+Initializing database schema…
+Database ready — tables: products, customers, orders, order_items
+Seeded 8 products, 5 customers, 2 orders.
 ```
 
-Use the **public** Postgres URL from Railway (Variables tab on the database service).
+For local development, you can still run:
+
+```bash
+python3 scripts/init_db.py
+python3 scripts/seed_db.py
+```
 
 ### Step 4 — Verify
 
@@ -96,8 +122,8 @@ Use the **public** Postgres URL from Railway (Variables tab on the database serv
 | Error | Fix |
 |-------|-----|
 | Railpack / no recognizable project at repo root | Set **Root Directory** to `app` |
-| Build OK but health check fails | Ensure `DATABASE_URL` is set and Postgres is running |
-| Tables missing | Run `init_db.py` and `seed_db.py` with the public DB URL |
+| Tables missing (`relation "products" does not exist`) | Redeploy after pushing latest code — tables are created on startup |
+| Build OK but health check fails | Ensure `DATABASE_URL` references the Postgres service |
 
 ---
 

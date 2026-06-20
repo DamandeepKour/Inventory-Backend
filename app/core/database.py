@@ -5,8 +5,17 @@ from core.config import get_settings
 
 settings = get_settings()
 
-# Use psycopg3 driver (works on Python 3.14+; psycopg2-binary does not)
-_db_url = settings.database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+def normalize_database_url(url: str) -> str:
+    """Railway and others may use postgres:// — psycopg3 needs postgresql+psycopg://."""
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql://", 1)
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+psycopg://", 1)
+    return url
+
+
+_db_url = normalize_database_url(settings.database_url)
 
 engine = create_engine(_db_url, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
