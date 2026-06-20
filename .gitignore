@@ -2,3 +2,6 @@
 __pycache__/
 *.pyc
 .env
+
+# Local dev only — Railway/Docker deploy from app/ (tables + seed on startup)
+scripts/
